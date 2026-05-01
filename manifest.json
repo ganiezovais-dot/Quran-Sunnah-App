@@ -1,0 +1,16 @@
+{
+  "name": "Bayyinah",
+  "short_name": "Bayyinah",
+  "description": "Interactive Quran and Sahih Hadith Assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e5631",
+  "theme_color": "#1e5631",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
