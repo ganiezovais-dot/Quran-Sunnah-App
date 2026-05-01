@@ -9,10 +9,9 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-# 2. Page Config
 st.set_page_config(page_title="Quran & Sunnah Hub", page_icon="📖", layout="wide")
 
-# 3. FIXED DESIGN (Fixed the 'unsafe_index' error)
+# 2. Design & Branding
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -21,15 +20,13 @@ st.markdown("""
         color: white !important; 
         border-radius: 10px;
         font-weight: bold;
-        border: none;
     }
     .stButton>button:hover { background-color: #a47c48 !important; }
     h1 { color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }
-    .stChatMessage { border: 1px solid #1e5631; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 4. History Storage
+# 3. History Storage
 HISTORY_FILE = "chat_history.txt"
 def save_to_file(user_q, ai_a):
     with open(HISTORY_FILE, "a", encoding="utf-8") as f:
@@ -68,16 +65,17 @@ SURAHS = [
     "111. المسد (Al-Masad)", "112. الإخلاص (Al-Ikhlas)", "113. الفلق (Al-Falaq)", "114. الناس (An-Nas)"
 ]
 
-# --- AI LOGIC ---
-def ask_ai(query, key):
+# --- AI SCHOLAR LOGIC ---
+def ask_ai(query, key, is_scholar=True):
     try:
         client = Groq(api_key=key)
-        sys_msg = "You are a scholar. Answer ONLY using Quran and Sahih Bukhari/Muslim. Cite references."
+        sys_msg = "You are a scholar. Answer ONLY using Quran and Sahih Bukhari/Muslim. Cite references." if is_scholar else ""
         chat = client.chat.completions.create(
             messages=[{"role": "system", "content": sys_msg}, {"role": "user", "content": query}],
             model="llama-3.1-8b-instant"
         )
-        return chat.choices.message.content
+        # FIXED: Accessing the content from the first choice correctly
+        return chat.choices[0].message.content
     except Exception as e:
         return f"AI Error: {e}"
 
@@ -101,7 +99,7 @@ if option == "1. Quran Reader":
         if not user_api_key: st.error("Add Key in Sidebar")
         else:
             with st.spinner("Fetching..."):
-                ans = ask_ai(f"Provide English translation for Surah {selected} via Quran.com.", user_api_key)
+                ans = ask_ai(f"Provide English translation for Surah {selected} via Quran.com.", user_api_key, False)
                 st.info(ans)
 
 elif option == "2. Hadith Sources":
@@ -124,7 +122,7 @@ elif option == "3. AI Scholar Agent":
             st.chat_message("user").write(q)
             with st.chat_message("assistant"):
                 st.write(ans)
-                st.code(ans, language="markdown") # Allows easy copying
+                st.code(ans, language="markdown")
 
 elif option == "4. My Research Log":
     st.subheader("Your Saved Research")
