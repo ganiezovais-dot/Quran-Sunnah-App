@@ -1,6 +1,8 @@
 import streamlit as st
 import asyncio
 import os
+import re
+import requests
 from groq import Groq
 
 # 1. Stability Fix for Python 3.13
@@ -9,9 +11,9 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
+# 2. Page Configuration & Design
 st.set_page_config(page_title="Quran & Sunnah Hub", page_icon="📖", layout="wide")
 
-# 2. Design & Branding
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -20,14 +22,17 @@ st.markdown("""
         color: white !important; 
         border-radius: 10px;
         font-weight: bold;
+        border: none;
     }
     .stButton>button:hover { background-color: #a47c48 !important; }
     h1 { color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }
+    .stChatMessage { border: 1px solid #1e5631; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. History Storage
+# 3. Permanent History Storage
 HISTORY_FILE = "chat_history.txt"
+
 def save_to_file(user_q, ai_a):
     with open(HISTORY_FILE, "a", encoding="utf-8") as f:
         f.write(f"USER: {user_q}\nAI: {ai_a}\n---\n")
@@ -65,7 +70,7 @@ SURAHS = [
     "111. المسد (Al-Masad)", "112. الإخلاص (Al-Ikhlas)", "113. الفلق (Al-Falaq)", "114. الناس (An-Nas)"
 ]
 
-# --- AI SCHOLAR LOGIC ---
+# --- AI AGENT LOGIC ---
 def ask_ai(query, key, is_scholar=True):
     try:
         client = Groq(api_key=key)
@@ -74,7 +79,6 @@ def ask_ai(query, key, is_scholar=True):
             messages=[{"role": "system", "content": sys_msg}, {"role": "user", "content": query}],
             model="llama-3.1-8b-instant"
         )
-        # FIXED: Accessing the content from the first choice correctly
         return chat.choices[0].message.content
     except Exception as e:
         return f"AI Error: {e}"
@@ -83,10 +87,19 @@ def ask_ai(query, key, is_scholar=True):
 st.markdown("<h1>🌙 NOBLE QURAN & SUNNAH HUB</h1>", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("App Controls")
-    user_api_key = st.text_input("Paste Groq Key:", type="password")
+    st.header("Settings")
+    # THE SECRET FIX: Pulls key from the dashboard automatically
+    try:
+        user_api_key = st.secrets["GROQ_KEY"]
+        st.success("✅ Scholar Brain Connected")
+    except:
+        st.error("❌ Key not found in Secrets Dashboard")
+        user_api_key = None
+
+    if "history" not in st.session_state: st.session_state.history = []
+    
     st.divider()
-    if st.button("🗑️ Clear PC History"):
+    if st.button("🗑️ Clear History"):
         if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
         st.rerun()
 
@@ -96,7 +109,7 @@ if option == "1. Quran Reader":
     st.subheader("Explore the 114 Surahs")
     selected = st.selectbox("Choose a Surah:", options=SURAHS)
     if st.button("✨ Load Holy Verses"):
-        if not user_api_key: st.error("Add Key in Sidebar")
+        if not user_api_key: st.error("Key error in Settings")
         else:
             with st.spinner("Fetching..."):
                 ans = ask_ai(f"Provide English translation for Surah {selected} via Quran.com.", user_api_key, False)
@@ -127,4 +140,4 @@ elif option == "3. AI Scholar Agent":
 elif option == "4. My Research Log":
     st.subheader("Your Saved Research")
     content = load_from_file()
-    st.text_area("Permanent History:", content, height=400)
+    st.text_area("Permanent History (Saved on PC):", content, height=400)
