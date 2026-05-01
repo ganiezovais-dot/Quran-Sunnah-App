@@ -11,18 +11,33 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-# 2. Permanent Name Change to Bayyinah
-st.set_page_config(page_title="Bayyinah", page_icon="📖", layout="wide")
+# 2. Permanent Name & Logo Branding
+# Logo URL: Using a professional gold/green crescent icon
+LOGO_URL = "https://flaticon.com"
 
-# 3. Link the Identity Card (Manifest) using your GitHub Username
-# This ensures it saves to your phone as "Bayyinah"
+st.set_page_config(
+    page_title="Bayyinah", 
+    page_icon=LOGO_URL, 
+    layout="wide"
+)
+
+# 3. THE "FORCE" BRANDING & PWA IDENTITY
 manifest_link = f'https://githubusercontent.com'
 
 st.markdown(f"""
     <head>
         <link rel="manifest" href="{manifest_link}">
+        <meta name="apple-mobile-web-app-title" content="Bayyinah">
+        <meta name="application-name" content="Bayyinah">
+        <meta name="theme-color" content="#1e5631">
     </head>
     <style>
+    /* HIDE STREAMLIT ELEMENTS */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    
+    /* CUSTOM INTERFACE DESIGN */
     .main {{ background-color: #f8f9fa; }}
     .stButton>button {{ 
         background-color: #1e5631 !important; 
@@ -30,15 +45,22 @@ st.markdown(f"""
         border-radius: 10px;
         font-weight: bold;
         border: none;
+        width: 100%;
     }}
     .stButton>button:hover {{ background-color: #a47c48 !important; }}
-    h1 {{ color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }}
-    .stChatMessage {{ border: 1px solid #1e5631; border-radius: 10px; }}
+    h1 {{ color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; font-family: 'Georgia', serif; }}
+    .stChatMessage {{ border: 1px solid #1e5631; border-radius: 12px; background-color: white; }}
+    
+    /* SIDEBAR STYLING */
+    [data-testid="stSidebar"] {{
+        background-color: #ffffff;
+        border-right: 2px solid #1e5631;
+    }}
     </style>
     <h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>
     """, unsafe_allow_html=True)
 
-# 4. Permanent History Storage (Phase 3-A)
+# 4. Permanent History Logic
 HISTORY_FILE = "chat_history.txt"
 def save_to_file(user_q, ai_a):
     with open(HISTORY_FILE, "a", encoding="utf-8") as f:
@@ -50,7 +72,7 @@ def load_from_file():
             return f.read()
     return "No history found yet."
 
-# --- DATA: 114 SURAHS (Corrected List) ---
+# 5. Full Surah List (114)
 SURAHS = [
     "1. الفاتحة (Al-Fatihah)", "2. البقرة (Al-Baqarah)", "3. آل عمران (Ali 'Imran)", "4. النساء (An-Nisa)", "5. المائدة (Al-Ma'idah)",
     "6. الأنعام (Al-An'am)", "7. الأعراف (Al-A'raf)", "8. الأنفال (Al-Anfal)", "9. التوبة (At-Tawbah)", "10. يونس (Yunus)",
@@ -77,57 +99,63 @@ SURAHS = [
     "111. المسد (Al-Masad)", "112. الإخلاص (Al-Ikhlas)", "113. الفلق (Al-Falaq)", "114. الناس (An-Nas)"
 ]
 
-# --- AI SCHOLAR LOGIC ---
+# 6. AI Agent Core
 def ask_ai(query, key, is_scholar=True):
     try:
-        # CLEAN INPUT: Understands "hadees", "bukari", etc.
+        # Typo correction logic
         query = query.lower().strip()
         typos = {"hadees": "hadith", "hadeet": "hadith", "bukari": "bukhari", "mosslim": "muslim"}
-        for w, r in typos.items():
-            query = query.replace(w, r)
-
+        for w, r in typos.items(): query = query.replace(w, r)
+        
         client = Groq(api_key=key)
         sys_msg = "You are a scholar. Answer ONLY using Quran and Sahih Bukhari/Muslim. Cite references." if is_scholar else ""
         chat = client.chat.completions.create(
             messages=[{"role": "system", "content": sys_msg}, {"role": "user", "content": query}],
             model="llama-3.1-8b-instant"
         )
-        return chat.choices[0].message.content # FIXED: Standard way to access Groq choice
+        return chat.choices[0].message.content
     except Exception as e:
         return f"AI Error: {e}"
 
-# --- APP LAYOUT ---
+# --- SIDEBAR & NAVIGATION ---
 with st.sidebar:
-    st.header("Settings")
+    st.image(LOGO_URL, width=100)
+    st.markdown("<h2 style='text-align: center; color: #1e5631;'>Bayyinah</h2>", unsafe_allow_html=True)
+    
     try:
-        # Pulls the key from Streamlit Cloud Secrets (for the web)
-        # Or from .streamlit/secrets.toml (for local)
         user_api_key = st.secrets["GROQ_KEY"]
-        st.success("✅ Bayyinah Connected")
+        st.success("✅ Scholar Brain Connected")
     except:
         st.error("❌ Key not found in Secrets")
         user_api_key = None
-
+    
+    st.divider()
+    # CREATOR BRANDING
+    st.markdown("<div style='text-align: center; font-weight: bold; color: #a47c48;'>Created by Ganiez Ovais</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.8em; color: gray;'>© 2024 Bayyinah Hub</div>", unsafe_allow_html=True)
+    
     if "history" not in st.session_state: st.session_state.history = []
     st.divider()
-    if st.button("🗑️ Clear PC History"):
+    if st.button("🗑️ Clear Local History"):
         if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
         st.rerun()
 
 option = st.sidebar.radio("Navigation:", ["1. Quran Reader", "2. Hadith Sources", "3. AI Scholar Agent", "4. My Research Log"])
 
+# --- TAB 1: QURAN ---
 if option == "1. Quran Reader":
     st.subheader("Explore the 114 Surahs")
     selected = st.selectbox("Choose a Surah:", options=SURAHS)
     if st.button("✨ Load Holy Verses"):
-        if not user_api_key: st.error("Scholar Brain not connected.")
+        if not user_api_key: st.error("Key Error")
         else:
             with st.spinner("Fetching..."):
-                ans = ask_ai(f"Provide English translation for Surah {selected} via Quran.com.", user_api_key, False)
+                ans = ask_ai(f"Provide English translation for {selected} via Quran.com.", user_api_key, False)
                 st.info(ans)
 
+# --- TAB 2: HADITH ---
 elif option == "2. Hadith Sources":
-    st.subheader("The Authenticated Sunnah")
+    st.subheader("Authentic Sources")
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("### Sahih al-Bukhari")
@@ -136,9 +164,10 @@ elif option == "2. Hadith Sources":
         st.markdown("### Sahih Muslim")
         st.link_button("📚 Read Muslim", "https://sunnah.com")
 
+# --- TAB 3: AI AGENT ---
 elif option == "3. AI Scholar Agent":
     st.subheader("Interactive AI Scholar")
-    q = st.chat_input("Ask about a verse or hadith (e.g. What does bukari say about truth?)")
+    q = st.chat_input("Ask a question...")
     if q and user_api_key:
         with st.spinner("Searching Sahih sources..."):
             ans = ask_ai(q, user_api_key)
@@ -146,8 +175,9 @@ elif option == "3. AI Scholar Agent":
             st.chat_message("user").write(q)
             with st.chat_message("assistant"):
                 st.write(ans)
-                st.code(ans, language="markdown") # Allows easy copying
+                st.code(ans, language="markdown")
 
+# --- TAB 4: HISTORY ---
 elif option == "4. My Research Log":
     st.subheader("Your Saved Research")
     content = load_from_file()
