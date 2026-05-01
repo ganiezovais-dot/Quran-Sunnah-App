@@ -12,7 +12,7 @@ except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
 # 2. Page Configuration & Design
-st.set_page_config(page_title="Quran & Sunnah Hub", page_icon="📖", layout="wide")
+st.set_page_config(page_title="Bayyinah", page_icon="📖", layout="wide")
 
 st.markdown("""
     <style>
