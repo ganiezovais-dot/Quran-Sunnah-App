@@ -84,7 +84,7 @@ def ask_ai(query, key, is_scholar=True):
         return f"AI Error: {e}"
 
 # --- APP LAYOUT ---
-st.markdown("<h1>🌙 NOBLE QURAN & SUNNAH HUB</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("Settings")
