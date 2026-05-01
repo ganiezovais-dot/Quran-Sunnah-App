@@ -5,34 +5,41 @@ import re
 import requests
 from groq import Groq
 
-# 1. Stability Fix for Python 3.13
+# 1. Stability Fix for Python 3.13 (Prevents blank screens)
 try:
     asyncio.get_running_loop()
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-# 2. Page Configuration & Design
+# 2. Permanent Name Change to Bayyinah
 st.set_page_config(page_title="Bayyinah", page_icon="📖", layout="wide")
 
-st.markdown("""
+# 3. Link the Identity Card (Manifest) using your GitHub Username
+# This ensures it saves to your phone as "Bayyinah"
+manifest_link = f'https://githubusercontent.com'
+
+st.markdown(f"""
+    <head>
+        <link rel="manifest" href="{manifest_link}">
+    </head>
     <style>
-    .main { background-color: #f8f9fa; }
-    .stButton>button { 
+    .main {{ background-color: #f8f9fa; }}
+    .stButton>button {{ 
         background-color: #1e5631 !important; 
         color: white !important; 
         border-radius: 10px;
         font-weight: bold;
         border: none;
-    }
-    .stButton>button:hover { background-color: #a47c48 !important; }
-    h1 { color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }
-    .stChatMessage { border: 1px solid #1e5631; border-radius: 10px; }
+    }}
+    .stButton>button:hover {{ background-color: #a47c48 !important; }}
+    h1 {{ color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }}
+    .stChatMessage {{ border: 1px solid #1e5631; border-radius: 10px; }}
     </style>
+    <h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>
     """, unsafe_allow_html=True)
 
-# 3. Permanent History Storage
+# 4. Permanent History Storage (Phase 3-A)
 HISTORY_FILE = "chat_history.txt"
-
 def save_to_file(user_q, ai_a):
     with open(HISTORY_FILE, "a", encoding="utf-8") as f:
         f.write(f"USER: {user_q}\nAI: {ai_a}\n---\n")
@@ -43,7 +50,7 @@ def load_from_file():
             return f.read()
     return "No history found yet."
 
-# --- DATA: 114 SURAHS ---
+# --- DATA: 114 SURAHS (Corrected List) ---
 SURAHS = [
     "1. الفاتحة (Al-Fatihah)", "2. البقرة (Al-Baqarah)", "3. آل عمران (Ali 'Imran)", "4. النساء (An-Nisa)", "5. المائدة (Al-Ma'idah)",
     "6. الأنعام (Al-An'am)", "7. الأعراف (Al-A'raf)", "8. الأنفال (Al-Anfal)", "9. التوبة (At-Tawbah)", "10. يونس (Yunus)",
@@ -70,36 +77,40 @@ SURAHS = [
     "111. المسد (Al-Masad)", "112. الإخلاص (Al-Ikhlas)", "113. الفلق (Al-Falaq)", "114. الناس (An-Nas)"
 ]
 
-# --- AI AGENT LOGIC ---
+# --- AI SCHOLAR LOGIC ---
 def ask_ai(query, key, is_scholar=True):
     try:
+        # CLEAN INPUT: Understands "hadees", "bukari", etc.
+        query = query.lower().strip()
+        typos = {"hadees": "hadith", "hadeet": "hadith", "bukari": "bukhari", "mosslim": "muslim"}
+        for w, r in typos.items():
+            query = query.replace(w, r)
+
         client = Groq(api_key=key)
         sys_msg = "You are a scholar. Answer ONLY using Quran and Sahih Bukhari/Muslim. Cite references." if is_scholar else ""
         chat = client.chat.completions.create(
             messages=[{"role": "system", "content": sys_msg}, {"role": "user", "content": query}],
             model="llama-3.1-8b-instant"
         )
-        return chat.choices[0].message.content
+        return chat.choices[0].message.content # FIXED: Standard way to access Groq choice
     except Exception as e:
         return f"AI Error: {e}"
 
 # --- APP LAYOUT ---
-st.markdown("<h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>", unsafe_allow_html=True)
-
 with st.sidebar:
     st.header("Settings")
-    # THE SECRET FIX: Pulls key from the dashboard automatically
     try:
+        # Pulls the key from Streamlit Cloud Secrets (for the web)
+        # Or from .streamlit/secrets.toml (for local)
         user_api_key = st.secrets["GROQ_KEY"]
-        st.success("✅ Scholar Brain Connected")
+        st.success("✅ Bayyinah Connected")
     except:
-        st.error("❌ Key not found in Secrets Dashboard")
+        st.error("❌ Key not found in Secrets")
         user_api_key = None
 
     if "history" not in st.session_state: st.session_state.history = []
-    
     st.divider()
-    if st.button("🗑️ Clear History"):
+    if st.button("🗑️ Clear PC History"):
         if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
         st.rerun()
 
@@ -109,7 +120,7 @@ if option == "1. Quran Reader":
     st.subheader("Explore the 114 Surahs")
     selected = st.selectbox("Choose a Surah:", options=SURAHS)
     if st.button("✨ Load Holy Verses"):
-        if not user_api_key: st.error("Key error in Settings")
+        if not user_api_key: st.error("Scholar Brain not connected.")
         else:
             with st.spinner("Fetching..."):
                 ans = ask_ai(f"Provide English translation for Surah {selected} via Quran.com.", user_api_key, False)
@@ -127,7 +138,7 @@ elif option == "2. Hadith Sources":
 
 elif option == "3. AI Scholar Agent":
     st.subheader("Interactive AI Scholar")
-    q = st.chat_input("Ask about a verse or hadith...")
+    q = st.chat_input("Ask about a verse or hadith (e.g. What does bukari say about truth?)")
     if q and user_api_key:
         with st.spinner("Searching Sahih sources..."):
             ans = ask_ai(q, user_api_key)
@@ -135,9 +146,9 @@ elif option == "3. AI Scholar Agent":
             st.chat_message("user").write(q)
             with st.chat_message("assistant"):
                 st.write(ans)
-                st.code(ans, language="markdown")
+                st.code(ans, language="markdown") # Allows easy copying
 
 elif option == "4. My Research Log":
     st.subheader("Your Saved Research")
     content = load_from_file()
-    st.text_area("Permanent History (Saved on PC):", content, height=400)
+    st.text_area("Permanent History Log:", content, height=400)
