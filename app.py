@@ -11,13 +11,10 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-# 2. FIXED LOGO & BRANDING (Using a reliable source)
-# This new link is a high-quality gold crescent that won't show as a broken image
-LOGO_URL = "https://icons8.com"
-
+# 2. Page Configuration (Using Emoji for Logo - Cannot break)
 st.set_page_config(
     page_title="Bayyinah", 
-    page_icon=LOGO_URL, 
+    page_icon="🌙", 
     layout="wide"
 )
 
@@ -35,8 +32,15 @@ st.markdown(f"""
     .stButton>button:hover {{ background-color: #a47c48 !important; }}
     h1 {{ color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }}
     .stChatMessage {{ border: 1px solid #1e5631; border-radius: 10px; }}
-    /* Fix for sidebar image spacing */
-    [data-testid="stSidebarNav"] {{ padding-top: 20px; }}
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {{
+        background-color: #ffffff;
+    }}
+    .logo-text {{
+        font-size: 50px;
+        text-align: center;
+        margin-bottom: -20px;
+    }}
     </style>
     <h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>
     """, unsafe_allow_html=True)
@@ -95,9 +99,9 @@ def ask_ai(query, key, is_scholar=True):
 
 # --- SIDEBAR & NAVIGATION ---
 with st.sidebar:
-    # Use the new bulletproof logo URL
-    st.image(LOGO_URL, width=80)
-    st.markdown("<h2 style='color: #1e5631;'>Bayyinah</h2>", unsafe_allow_html=True)
+    # Emoji Logo (Guaranteed to show)
+    st.markdown('<div class="logo-text">🌙</div>', unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #1e5631;'>Bayyinah</h2>", unsafe_allow_html=True)
     
     try:
         user_api_key = st.secrets["GROQ_KEY"]
@@ -107,15 +111,18 @@ with st.sidebar:
         user_api_key = None
     
     st.divider()
-    st.markdown("<div style='font-weight: bold; color: #a47c48;'>Created by Ganiez Ovais</div>", unsafe_allow_html=True)
+    
+    option = st.radio("Navigation:", ["1. Quran Reader", "2. Hadith Sources", "3. AI Scholar Agent", "4. My Research Log"])
     
     if "history" not in st.session_state: st.session_state.history = []
     st.divider()
+    
     if st.button("🗑️ Clear History"):
         if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
         st.rerun()
 
-option = st.sidebar.radio("Navigation:", ["1. Quran Reader", "2. Hadith Sources", "3. AI Scholar Agent", "4. My Research Log"])
+    # Footer at the very bottom of sidebar
+    st.markdown("<br><br><div style='text-align: center; font-weight: bold; color: #a47c48;'>Created by Ganiez Ovais</div>", unsafe_allow_html=True)
 
 # --- CONTENT TABS ---
 if option == "1. Quran Reader":
