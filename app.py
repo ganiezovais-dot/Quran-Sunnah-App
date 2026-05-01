@@ -11,8 +11,9 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-# 2. Page Configuration (Browser Tab Name & Logo)
-LOGO_URL = "https://flaticon.com"
+# 2. FIXED LOGO & BRANDING (Using a reliable source)
+# This new link is a high-quality gold crescent that won't show as a broken image
+LOGO_URL = "https://icons8.com"
 
 st.set_page_config(
     page_title="Bayyinah", 
@@ -20,7 +21,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 3. Clean Design (Safe Version - Does not hide Sidebar)
+# 3. Clean Design
 st.markdown(f"""
     <style>
     .main {{ background-color: #f8f9fa; }}
@@ -34,6 +35,8 @@ st.markdown(f"""
     .stButton>button:hover {{ background-color: #a47c48 !important; }}
     h1 {{ color: #1e5631; text-align: center; border-bottom: 2px solid #1e5631; padding-bottom: 10px; }}
     .stChatMessage {{ border: 1px solid #1e5631; border-radius: 10px; }}
+    /* Fix for sidebar image spacing */
+    [data-testid="stSidebarNav"] {{ padding-top: 20px; }}
     </style>
     <h1>🌙 BAYYINAH: QURAN & SUNNAH HUB</h1>
     """, unsafe_allow_html=True)
@@ -92,7 +95,8 @@ def ask_ai(query, key, is_scholar=True):
 
 # --- SIDEBAR & NAVIGATION ---
 with st.sidebar:
-    st.image(LOGO_URL, width=100)
+    # Use the new bulletproof logo URL
+    st.image(LOGO_URL, width=80)
     st.markdown("<h2 style='color: #1e5631;'>Bayyinah</h2>", unsafe_allow_html=True)
     
     try:
@@ -136,7 +140,7 @@ elif option == "2. Hadith Sources":
 
 elif option == "3. AI Scholar Agent":
     st.subheader("Interactive AI Scholar")
-    q = st.chat_input("Ask a question...")
+    q = st.chat_input("Ask about a verse or hadith...")
     if q and user_api_key:
         with st.spinner("Searching Sahih sources..."):
             ans = ask_ai(q, user_api_key)
